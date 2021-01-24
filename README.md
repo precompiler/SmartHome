@@ -1,1 +1,1 @@
-# SmartHome
+# Home Automation
