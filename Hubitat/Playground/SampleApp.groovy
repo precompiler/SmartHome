@@ -20,9 +20,21 @@ preferences {
 
 
 def installed() {
+    // called when the app is installed for the first time
     log.info("App installed with settings -> ${settings}")
 }
 
 def updated() {
+    // called when the preferences of the app are updated
     log.info("App updated with settings -> ${settings}")
+}
+
+def uninstalled() {
+    // called when the app is uninstalled
+    log.info("App uninstalled")
+}
+
+def childUninstalled() {
+    // called when child app is uninstalled
+    log.info("Child app uninstalled")
 }
