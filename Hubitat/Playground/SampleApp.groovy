@@ -9,12 +9,22 @@ definition(
     iconX3Url: "")
 
 preferences {
-    section("Basic Configurations") {
-        input name: "message", type: "text", title: "App message", description: "Enter message", required: true
+    page(name: "pg1", title: "Page One", nextPage: "pg2", uninstall: true) {
+        section("Basic Configurations") {
+                input name: "message", type: "text", title: "App message", description: "Enter message", required: true
+        }
     }
-
-    section("Advanced Configurations") {
-
+    
+    page(name: "pg2", title: "Page Two", uninstall: true, install: true) {
+        section("Advanced Configurations") {
+            paragraph "This is a long description that rambles on and on and on..."
+            href(name: "hrefNotRequired",
+             title: "Hubitat",
+             required: false,
+             style: "external",
+             url: "https://hubitat.com/",
+             description: "tap to view hubitat website")
+        }
     }
 }
 
