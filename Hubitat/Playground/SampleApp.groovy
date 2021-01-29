@@ -92,11 +92,13 @@ private actions(attributeName) {
 def installed() {
     // called when the app is installed for the first time
     log.info("App installed with settings -> ${settings}")
+    state.installedTime = now()
 }
 
 def updated() {
     // called when the preferences of the app are updated
     log.info("App updated with settings -> ${settings}")
+    log.info("Installed @ ${state.installedTime}")
 }
 
 def uninstalled() {
