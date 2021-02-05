@@ -28,6 +28,7 @@ def installed() {
     subscribe(location, "sunriseTime", modeLocationHandler)
 }
 
+// event object doc => https://docs.hubitat.com/index.php?title=Event_Object
 def switchHandler(evt) {
     log.info("switch status changed to ${evt.value}")
 }
