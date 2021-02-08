@@ -15,6 +15,12 @@ mappings {
     path("/greeting") { action: [GET: "greeting"]}
 }
 
+preferences {
+    section("Logging Setting") {
+        input("logEnable", "bool", "Enable logging?", required: false, default: false)
+    }
+}
+
 def greeting() {
     log.info("========hello!==========")
     render(contentType: "application/json", data: new JsonBuilder(["msg": "hello"]).toPrettyString())
@@ -37,3 +43,4 @@ def initialize() {
     // for test only
     log.info("${getLocalApiServerUrl()}/${app.id}/greeting?access_token=${state.accessToken}")
 }
+
