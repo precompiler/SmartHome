@@ -14,38 +14,57 @@ definition(
 mappings {
     path("/hubs") { action: [GET: "getHubs"]}
     path("/hubs/:id") { action: [GET: "getHubInfo"]}
+
+    path("/devices") { action: [GET: "getDevices"]}
+    path("/devices/:id") { action: [GET: "getDeviceInfo"]}
+    path("/devices/:id/attributes") { action: [GET: "getDeviceAttributes"]}
 }
 
 preferences {
+    section("Select Allowed Devices") {
+        input("allDevices", "capability.*", multiple: true)   
+    }
     section("Logging Setting") {
         input(name: "logEnable", type: "bool", title: "Enable logging?", required: false, default: false)
     }
 }
 
 def getHubs() {
-    def hubList = []
-    location.hubs?.each {
-        hubList.add([
-            "id": it.id,
-            "name": it.name
-        ])
-    }
-    render(contentType: APPLICATION_JSON, data: new JsonBuilder(hubList).toPrettyString())
+    def hubList = _getHubs()
+    _renderJson(hubList)
 }
 
 def getHubInfo() {
-    def hub = location.hubs?.find{String.valueOf(it.id) == params.id}
+    def hub = _getHubInfoById(params.id)
     if(!hub) {
-        render(status: 404, contentType: APPLICATION_JSON, data: '')
+        _renderError(404, '')
     } else {
-        def ret = [
-            "id": hub.id,
-            "name": hub.name,
-            "localIP": hub.localIP,
-            "firmwareVersion": hub.firmwareVersionString,
-            "uptime": "${hub.uptime/60/60}h"
-        ]
-        render(contentType: APPLICATION_JSON, data: new JsonBuilder(ret).toPrettyString())
+        _renderJson(hub)
+    }
+}
+
+def getDevices() {
+    def deviceList = _getDevices()
+    _renderJson(deviceList)
+}
+
+def getDeviceInfo() {
+    def d = _getDeviceInfoById(params.id)
+    if(!d) {
+        _renderError(404, '')
+    } else {
+        _renderJson(d)
+    }
+}
+
+
+
+def getDeviceAttributes() {
+    def attributes = _getDeviceAttributesById(params.id)
+    if(!attributes) {
+        _renderError(404, '')
+    } else {
+        _renderJson(attributes)
     }
 }
 
@@ -66,5 +85,91 @@ def initialize() {
     log.info("${getLocalApiServerUrl()}/${app.id}/greeting?access_token=${state.accessToken}")
 }
 
+
+private _getHubs() {
+    def hubList = []
+    location.hubs?.each {
+        hubList.add([
+            "id": it.id,
+            "name": it.name
+        ])
+    }
+    return hubList
+}
+
+private _getDevices() {
+    def deviceList = []
+    allDevices?.each {
+        deviceList.add(
+            [
+                "id": it.getId(),
+                "name": it.getName(),
+                "label": it.getLabel()
+            ]
+        )
+    }
+    return deviceList
+}
+
+private _getDeviceById(id) {
+    return allDevices.find {it.id == id}
+}
+
+private _getHubInfoById(id) {
+    def hub = location.hubs?.find{String.valueOf(it.id) == id}
+    if(!hub) {
+        return null
+    } else {
+        return [
+            "id": hub.id,
+            "name": hub.name,
+            "localIP": hub.localIP,
+            "firmwareVersion": hub.firmwareVersionString,
+            "uptime": "${hub.uptime/60/60}h"
+        ]
+    }
+}
+
+private _getDeviceInfoById(id) {
+    def d = _getDeviceById(id)
+    if(!d) {
+        return null
+    } else {
+        return [
+            "id": d.getId(),
+            "name": d.getName(),
+            "label": d.getLabel(),
+            "data": d.getData(),
+            "status": d.getStatus()
+        ]
+    }
+}
+
+private _getDeviceAttributesById(id) {
+    def d = _getDeviceById(id)
+    def attributes = [:]
+    if(!d) {
+        return null
+    } else {
+        d.getSupportedAttributes().each {
+            if (attributes.containsKey(it.name)) {
+                // it's possible that a device has attributes with same name but different IDs. e.g. lidl color bulb
+                // first attribute wins and log a warning message
+                log.warn("Duplicate attribute found ${it.name}")
+            } else {
+                attributes[it.name] = d.currentState(it.name)
+            }
+        }
+        return attributes
+    }
+}
+
+private _renderJson(data) {
+    render(contentType: APPLICATION_JSON, data: new JsonBuilder(data).toPrettyString())
+}
+
+private _renderError(httpCode, data) {
+    render(status: httpCode, contentType: APPLICATION_JSON, data: data)
+}
 
 final String APPLICATION_JSON = 'application/json'
