@@ -18,6 +18,7 @@ mappings {
     path("/devices") { action: [GET: "getDevices"]}
     path("/devices/:id") { action: [GET: "getDeviceInfo"]}
     path("/devices/:id/attributes") { action: [GET: "getDeviceAttributes"]}
+    path("/devices/:id/commands") { action: [GET: "getDeviceCommands"]}
 }
 
 preferences {
@@ -65,6 +66,15 @@ def getDeviceAttributes() {
         _renderError(404, '')
     } else {
         _renderJson(attributes)
+    }
+}
+
+def getDeviceCommands() {
+    def commands = _getDeviceCommandsById(params.id)
+    if(!commands) {
+        _renderError(404, '')
+    } else {
+        _renderJson(commands)
     }
 }
 
@@ -161,6 +171,19 @@ private _getDeviceAttributesById(id) {
             }
         }
         return attributes
+    }
+}
+
+private _getDeviceCommandsById(id) {
+    def d = _getDeviceById(id)
+    def commands = []
+    if(!d) {
+        return null
+    } else {
+        d.getSupportedCommands().each {
+            commands.add(it)
+        }
+        return commands
     }
 }
 
