@@ -19,6 +19,8 @@ mappings {
     path("/devices/:id") { action: [GET: "getDeviceInfo"]}
     path("/devices/:id/attributes") { action: [GET: "getDeviceAttributes"]}
     path("/devices/:id/commands") { action: [GET: "getDeviceCommands"]}
+
+    path("/devices")
 }
 
 preferences {
@@ -163,8 +165,9 @@ private _getDeviceAttributesById(id) {
     } else {
         d.getSupportedAttributes().each {
             if (attributes.containsKey(it.name)) {
-                // it's possible that a device has attributes with same name but different IDs. e.g. lidl color bulb
-                // first attribute wins and log a warning message
+                // it's possible that a device has attributes with same name but different IDs. e.g. A lidl color bulb has both switch and light capabilities
+                // and both capabilities have switch attributes
+                // logic here is that first attribute wins and log a warning message
                 log.warn("Duplicate attribute found ${it.name}")
             } else {
                 attributes[it.name] = d.currentState(it.name)
