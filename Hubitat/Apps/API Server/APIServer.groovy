@@ -20,7 +20,7 @@ mappings {
     path("/devices/:id/attributes") { action: [GET: "getDeviceAttributes"]}
     path("/devices/:id/commands") { action: [GET: "getDeviceCommands"]}
 
-    path("/devices")
+    path("/devices/:id/toggle") {action: [POST: "toggleDevice"]}
 }
 
 preferences {
@@ -78,6 +78,11 @@ def getDeviceCommands() {
     } else {
         _renderJson(commands)
     }
+}
+
+def toggleDevice() {
+    def msg = _toggleDeviceOnOff(params.id)
+    _renderJson(["msg": msg])
 }
 
 def installed() {
@@ -174,6 +179,33 @@ private _getDeviceAttributesById(id) {
             }
         }
         return attributes
+    }
+}
+
+private _toggleDeviceOnOff(id) {
+    def d = _getDeviceById(id)
+    if(!d) {
+        return "No device with ID ${id} found"
+    }
+    def isDeviceToggleable = false
+    def toggleableCapabilities = ["Bulb", "Light", "Outlet", "RelaySwitch", "SamsungTV", "Switch", "VideoCamera"]
+    for(capability in toggleableCapabilities) {
+        if(d.hasCapability(capability)) {
+            isDeviceToggleable = true
+            break
+        }
+    }
+    if(isDeviceToggleable) {
+        if(d.hasAttribute("switch")) {
+            d.currentState("switch").getValue() == "on" ? d.off() : d.on()
+            return "Device toggled ${d.currentState('switch', true).getValue() == 'on' ? 'off' : 'on'}"
+        } else {
+            // not likely to happen
+            log.error(d)
+            return "Device with ID ${id} has no switch attribute"
+        }
+    } else {
+        return "Device with ID ${id} is not toggleable"
     }
 }
 
